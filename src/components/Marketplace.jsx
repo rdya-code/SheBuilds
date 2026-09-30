@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
 const listings = [
   {
@@ -7,7 +7,7 @@ const listings = [
     category: "Products",
     seller: "Amina Beauty",
     price: "$35",
-    image: "https://images.pexels.com/photos/3735657/pexels-photo-3735657.jpeg?auto=compress&cs=tinysrgb&w=500"
+    image: "https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=500&q=80"
   },
   {
     id: 2,
@@ -15,7 +15,7 @@ const listings = [
     category: "Services",
     seller: "Radia Designs",
     price: "$150",
-    image: "https://images.pexels.com/photos/196644/pexels-photo-196644.jpeg?auto=compress&cs=tinysrgb&w=500"
+    image: "https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?auto=format&fit=crop&w=500&q=80"
   },
   {
     id: 3,
@@ -23,7 +23,7 @@ const listings = [
     category: "Products",
     seller: "Hareem Crafts",
     price: "$60",
-    image: "https://images.pexels.com/photos/4219654/pexels-photo-4219654.jpeg?auto=compress&cs=tinysrgb&w=500"
+    image: "https://images.unsplash.com/photo-1528458876861-544fd1761a91?auto=format&fit=crop&w=500&q=80"
   },
   {
     id: 4,
@@ -31,41 +31,53 @@ const listings = [
     category: "Services",
     seller: "Digital She Marketing",
     price: "$200",
-    image: "https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg?auto=compress&cs=tinysrgb&w=500"
+    image: "https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?auto=format&fit=crop&w=500&q=80"
   }
 ];
 
-export default function Marketplace() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
+function Marketplace() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
 
-  const filteredListings = SAMPLE_LISTINGS.filter((item) => {
-    const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
+  const filteredListings = listings.filter((item) => {
+    const matchesSearch = item.title
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesCategory =
+      selectedCategory === "All" || item.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
-  return (
-    <div className="page-container">
-      <h2>SheBuilds Marketplace</h2>
-      <p className="page-subtitle">Discover and support products and services from verified women creators.</p>
+  const handleCategorySelect = (category) => {
+    setSelectedCategory(category);
+    setSearchTerm("");
+  };
 
-      {/* Task 2 Interactions: Search & Category Filtering */}
+  return (
+    <div className="marketplace-container">
+      <h2>Explore Marketplace</h2>
+      <p className="page-subtitle">
+        Support products and services from verified women-owned businesses.
+      </p>
+
+      {/* Filter Controls */}
       <div className="filter-controls">
-        <input 
-          type="text" 
-          placeholder="Search products or services..." 
+        <input
+          type="text"
+          placeholder="Search products or services..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="search-input"
         />
-        
+
         <div className="category-buttons">
-          {['All', 'Products', 'Services'].map((cat) => (
-            <button 
-              key={cat} 
-              className={`category-btn ${selectedCategory === cat ? 'active' : ''}`}
-              onClick={() => setSelectedCategory(cat)}
+          {["All", "Products", "Services"].map((cat) => (
+            <button
+              key={cat}
+              className={`category-btn ${
+                selectedCategory === cat ? "active" : ""
+              }`}
+              onClick={() => handleCategorySelect(cat)}
             >
               {cat}
             </button>
@@ -73,11 +85,11 @@ export default function Marketplace() {
         </div>
       </div>
 
-      {/* Listing Grid */}
+      {/* Listings Grid */}
       <div className="listings-grid">
         {filteredListings.length > 0 ? (
           filteredListings.map((item) => (
-            <div key={item.id} className="listing-card">
+            <div className="listing-card" key={item.id}>
               <img src={item.image} alt={item.title} />
               <div className="listing-info">
                 <span className="badge">{item.category}</span>
@@ -85,15 +97,19 @@ export default function Marketplace() {
                 <p className="seller-name">By {item.seller}</p>
                 <div className="card-footer">
                   <span className="price">{item.price}</span>
-                  <button className="btn primary-btn small">Inquire / Request</button>
+                  <button className="btn primary-btn small">
+                    Inquire / Request
+                  </button>
                 </div>
               </div>
             </div>
           ))
         ) : (
-          <p className="no-results">No listings match your search criteria.</p>
+          <p>No listings match your search criteria.</p>
         )}
       </div>
     </div>
   );
 }
+
+export default Marketplace;
