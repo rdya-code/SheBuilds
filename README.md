@@ -1,16 +1,32 @@
-# React + Vite
+### 1. Project Information
+* **Project Name:** SheBuilds — A Secure Women's Business & Freelance Marketplace
+* **Group Members:** 
+  1. Hareem Hamid
+  2. Radia Shahzad
+* **Primary User Role:** Customer
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+---
 
-Currently, two official plugins are available:
+### 2. Live Website
+* **Public URL:** https://she-builds-flame.vercel.app/
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+### 3. Developed Pages
+1. **Home / Landing Page (Home.jsx):** Displays system name, system mission statement, value proposition cards, call-to-action buttons, global navigation bar, and footer.
+2. **Login / User Entry Page (Login.jsx):** Role selection dropdown (Customer, Seller, Admin), email input, password input with show/hide toggle, dynamic input validation, and clear security boundary notice.
+3. **Core Functional Marketplace Page (Marketplace.jsx):** Interactive product & service listing cards for women entrepreneurs, live search bar, dynamic category badge filters, and inquiry trigger buttons.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+### 4. JavaScript Interactions
+1. **Show / Hide Password Toggle:** Toggle state handler switching the password input field type between password and plaintext for user clarity.
+2. **Dynamic Search Bar:** Real-time text filter evaluating listing titles against user input on every keystroke.
+3. **Category Filtering:** Filter handler switching state between 'All', 'Products', and 'Services' to dynamically re-render marketplace cards.
+4. **Client-Side Form Validation:** Dynamic error state verifying valid email structure and minimum 6-character length before processing authentication requests.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
+
+### 5. Testing
+* **Problem discovered:** When filtering categories on the Marketplace page while text was present in the search field, search results did not automatically reset, leading to unexpected empty screens on narrow searches.
+* **Improvement made:** Updated the category selection handler state to clear the active search term string when switching category badges, ensuring consistent results.
