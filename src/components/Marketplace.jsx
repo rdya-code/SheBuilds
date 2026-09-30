@@ -1,10 +1,38 @@
 import React, { useState } from 'react';
 
-const SAMPLE_LISTINGS = [
-  { id: 1, title: 'Handmade Organic Skincare Set', category: 'Products', seller: 'Amina Beauty', price: '$35', image: 'https://via.placeholder.com/200?text=Skincare' },
-  { id: 2, title: 'Custom UI/UX Design for Startups', category: 'Services', seller: 'Radia Designs', price: '$150', image: 'https://via.placeholder.com/200?text=UI+Design' },
-  { id: 3, title: 'Artisanal Hand-Woven Tapestry', category: 'Products', seller: 'Hareem Crafts', price: '$60', image: 'https://via.placeholder.com/200?text=Tapestry' },
-  { id: 4, title: 'Social Media Management (1 Month)', category: 'Services', seller: 'Digital She Marketing', price: '$200', image: 'https://via.placeholder.com/200?text=Marketing' },
+const listings = [
+  {
+    id: 1,
+    title: "Handmade Organic Skincare Set",
+    category: "Products",
+    seller: "Amina Beauty",
+    price: "$35",
+    image: "https://images.pexels.com/photos/3735657/pexels-photo-3735657.jpeg?auto=compress&cs=tinysrgb&w=500"
+  },
+  {
+    id: 2,
+    title: "Custom UI/UX Design for Startups",
+    category: "Services",
+    seller: "Radia Designs",
+    price: "$150",
+    image: "https://images.pexels.com/photos/196644/pexels-photo-196644.jpeg?auto=compress&cs=tinysrgb&w=500"
+  },
+  {
+    id: 3,
+    title: "Artisanal Hand-Woven Tapestry",
+    category: "Products",
+    seller: "Hareem Crafts",
+    price: "$60",
+    image: "https://images.pexels.com/photos/4219654/pexels-photo-4219654.jpeg?auto=compress&cs=tinysrgb&w=500"
+  },
+  {
+    id: 4,
+    title: "Social Media Management (1 Month)",
+    category: "Services",
+    seller: "Digital She Marketing",
+    price: "$200",
+    image: "https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg?auto=compress&cs=tinysrgb&w=500"
+  }
 ];
 
 export default function Marketplace() {
