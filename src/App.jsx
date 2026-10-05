@@ -1,38 +1,39 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import Navbar from './components/Navbar';
 import Home from './components/Home';
-import Login from './components/Login';
 import Marketplace from './components/Marketplace';
-import './App.css';
+import Login from './components/Login';
+import Dashboard from './components/Dashboard';
+import Footer from './components/Footer';
 
 export default function App() {
+  const [currentUser, setCurrentUser] = useState(null);
+  const [currentPage, setCurrentPage] = useState('home');
+
+  const handleLoginSuccess = (user) => {
+    setCurrentUser(user);
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    setCurrentPage('login');
+  };
+
   return (
-    <Router>
-      <div className="app-layout">
-        {/* Navigation Bar */}
-        <header className="navbar">
-          <div className="logo">SheBuilds</div>
-          <nav className="nav-links">
-            <Link to="/">Home</Link>
-            <Link to="/marketplace">Marketplace</Link>
-            <Link to="/login">Login</Link>
-          </nav>
-        </header>
+    <div>
+      <Navbar onNavigate={(page) => setCurrentPage(page)} currentUser={currentUser} onLogout={handleLogout} />
+      
+      {currentUser ? (
+        <Dashboard user={currentUser} onLogout={handleLogout} />
+      ) : (
+        <>
+          {currentPage === 'home' && <Home />}
+          {currentPage === 'marketplace' && <Marketplace />}
+          {currentPage === 'login' && <Login onLoginSuccess={handleLoginSuccess} />}
+        </>
+      )}
 
-        {/* Main Connected Content */}
-        <main className="main-content">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/marketplace" element={<Marketplace />} />
-            <Route path="/login" element={<Login />} />
-          </Routes>
-        </main>
-
-        {/* Footer */}
-        <footer className="footer">
-          <p>&copy; 2026 SheBuilds Project — Hareem Hamid & Radia Shahzad. All rights reserved.</p>
-        </footer>
-      </div>
-    </Router>
+      <Footer />
+    </div>
   );
 }

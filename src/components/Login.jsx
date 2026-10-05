@@ -1,74 +1,66 @@
 import React, { useState } from 'react';
+import { DEMO_USERS } from './users';
 
-export default function Login() {
-  const [showPassword, setShowPassword] = useState(false);
+export default function Login({ onLoginSuccess }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('customer');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!email.includes('@') || password.length < 6) {
-      setError('Please enter a valid email address and a password with at least 6 characters.');
-      return;
+    const user = DEMO_USERS.find(u => u.email === email && u.password === password);
+    
+    if (user) {
+      setError('');
+      onLoginSuccess(user);
+    } else {
+      setError('Invalid credentials! Use demo emails provided.');
     }
-    setError('');
-    alert(`Logged in successfully as ${role.toUpperCase()} (Demo Mode)`);
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-card">
-        <h2>Welcome to SheBuilds</h2>
-        <p className="auth-subtitle">Please sign in to continue</p>
-        
-        {error && <div className="error-message">{error}</div>}
+    <div style={{ maxWidth: '400px', margin: '2rem auto', padding: '2rem', border: '1px solid #ddd', borderRadius: '8px' }}>
+      <h3>SheBuilds Login</h3>
+      <p style={{ fontSize: '0.85rem', color: '#666' }}>
+        <strong>Demo Seller:</strong> fatima@shebuilds.com | password123<br />
+        <strong>Demo Customer:</strong> zara@shebuilds.com | password123
+      </p>
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Select Role</label>
-            <select value={role} onChange={(e) => setRole(e.target.value)}>
-              <option value="customer">Customer</option>
-              <option value="seller">Seller / Entrepreneur</option>
-              <option value="admin">Administrator</option>
-            </select>
-          </div>
+      {error && <p style={{ color: 'red', fontSize: '0.9rem' }}>{error}</p>}
 
-          <div className="form-group">
-            <label>Email Address</label>
+      <form onSubmit={handleSubmit}>
+        <div style={{ marginBottom: '1rem' }}>
+          <label>Email:</label>
+          <input 
+            type="email" 
+            value={email} 
+            onChange={(e) => setEmail(e.target.value)} 
+            required 
+            style={{ width: '100%', padding: '0.5rem', marginTop: '0.2rem' }}
+          />
+        </div>
+
+        <div style={{ marginBottom: '1rem' }}>
+          <label>Password:</label>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
             <input 
-              type="email" 
-              placeholder="name@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type={showPassword ? 'text' : 'password'} 
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)} 
               required 
+              style={{ flex: 1, padding: '0.5rem' }}
             />
+            <button type="button" onClick={() => setShowPassword(!showPassword)}>
+              {showPassword ? 'Hide' : 'Show'}
+            </button>
           </div>
+        </div>
 
-          <div className="form-group">
-            <label>Password</label>
-            <div className="password-input-wrapper">
-              <input 
-                type={showPassword ? 'text' : 'password'} 
-                placeholder="Enter password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required 
-              />
-              <button 
-                type="button" 
-                className="toggle-password"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? 'Hide' : 'Show'}
-              </button>
-            </div>
-          </div>
-
-          <button type="submit" className="btn primary-btn full-width">Sign In</button>
-        </form>
-      </div>
+        <button type="submit" style={{ width: '100%', padding: '0.7rem', background: '#d81b60', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+          Login
+        </button>
+      </form>
     </div>
   );
 }
