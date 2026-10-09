@@ -126,6 +126,16 @@ export default function Dashboard({ user, onLogout }) {
         <button onClick={onLogout} style={styles.logout}>Logout</button>
       </div>
 
+      {/* Activity 3: Module navigation */}
+      <div style={styles.card}>
+        <h3>Modules</h3>
+        <Link to="/modules/listings">
+          <button style={styles.btn}>Create Listing (Module 1)</button>
+        </Link>
+        <Link to="/modules/inquiries">
+          <button style={styles.btn}>Inquiries &amp; Tracking (Module 2)</button>
+        </Link>
+      </div>
       {notice && (
         <div style={notice.type === 'error' ? styles.error : styles.success}>
           {notice.type === 'error' ? '⚠️ Security Notice: ' : '✅ '}

@@ -11,20 +11,19 @@ import Home from './components/Home';
 import Login from './components/Login';
 import Marketplace from './components/Marketplace';
 import Dashboard from './components/Dashboard';
+import ListingModule from './modules/ListingModule';
+import InquiryModule from './modules/InquiryModule';
 import './App.css';
 
-// Inner component lives inside <Router> so it can use useNavigate.
 function AppShell() {
-  const [currentUser, setCurrentUser] = useState(null); // session state
+  const [currentUser, setCurrentUser] = useState(null);
   const navigate = useNavigate();
 
-  // PART 4: store the identified user, then route to their dashboard
   const handleLoginSuccess = (user) => {
     setCurrentUser(user);
     navigate('/dashboard');
   };
 
-  // PART 9: clear session and return to login
   const handleLogout = () => {
     setCurrentUser(null);
     navigate('/login', { replace: true });
@@ -32,7 +31,6 @@ function AppShell() {
 
   return (
     <div className="app-layout">
-      {/* Navigation Bar */}
       <header className="navbar">
         <div className="logo">SheBuilds</div>
         <nav className="nav-links">
@@ -41,6 +39,8 @@ function AppShell() {
           {currentUser ? (
             <>
               <Link to="/dashboard">Dashboard</Link>
+              <Link to="/modules/listings">Create Listing</Link>
+              <Link to="/modules/inquiries">Inquiries</Link>
               <button
                 onClick={handleLogout}
                 style={{
@@ -57,7 +57,6 @@ function AppShell() {
         </nav>
       </header>
 
-      {/* Main Content with protected routes */}
       <main className="main-content">
         <Routes>
           <Route path="/" element={<Home />} />
@@ -72,7 +71,6 @@ function AppShell() {
               )
             }
           />
-          {/* Protected route: only logged-in users reach the dashboard */}
           <Route
             path="/dashboard"
             element={
@@ -83,11 +81,32 @@ function AppShell() {
               )
             }
           />
+          {/* Activity 3: Module 1 — protected route */}
+          <Route
+            path="/modules/listings"
+            element={
+              currentUser ? (
+                <ListingModule user={currentUser} />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          {/* Activity 3: Module 2 — protected route */}
+          <Route
+            path="/modules/inquiries"
+            element={
+              currentUser ? (
+                <InquiryModule user={currentUser} />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
 
-      {/* Footer */}
       <footer className="footer">
         <p>&copy; 2026 SheBuilds Project — Hareem Hamid & Radia Shahzad. All rights reserved.</p>
       </footer>
