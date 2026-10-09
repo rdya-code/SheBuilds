@@ -7,15 +7,18 @@ export default function Login({ onLoginSuccess }) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
+  // PART 4: Functional login — identify the user from the demo list
   const handleSubmit = (e) => {
     e.preventDefault();
-    const user = DEMO_USERS.find(u => u.email === email && u.password === password);
-    
+    const user = DEMO_USERS.find(
+      (u) => u.email === email.trim().toLowerCase() && u.password === password
+    );
+
     if (user) {
       setError('');
-      onLoginSuccess(user);
+      onLoginSuccess(user); // App.jsx stores the user and routes by role
     } else {
-      setError('Invalid credentials! Use demo emails provided.');
+      setError('Invalid credentials! Use one of the demo accounts shown above.');
     }
   };
 
@@ -32,23 +35,23 @@ export default function Login({ onLoginSuccess }) {
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: '1rem' }}>
           <label>Email:</label>
-          <input 
-            type="email" 
-            value={email} 
-            onChange={(e) => setEmail(e.target.value)} 
-            required 
-            style={{ width: '100%', padding: '0.5rem', marginTop: '0.2rem' }}
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            style={{ width: '100%', padding: '0.5rem', marginTop: '0.2rem', boxSizing: 'border-box' }}
           />
         </div>
 
         <div style={{ marginBottom: '1rem' }}>
           <label>Password:</label>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <input 
-              type={showPassword ? 'text' : 'password'} 
-              value={password} 
-              onChange={(e) => setPassword(e.target.value)} 
-              required 
+            <input
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
               style={{ flex: 1, padding: '0.5rem' }}
             />
             <button type="button" onClick={() => setShowPassword(!showPassword)}>
@@ -57,7 +60,10 @@ export default function Login({ onLoginSuccess }) {
           </div>
         </div>
 
-        <button type="submit" style={{ width: '100%', padding: '0.7rem', background: '#d81b60', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+        <button
+          type="submit"
+          style={{ width: '100%', padding: '0.7rem', background: '#d81b60', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+        >
           Login
         </button>
       </form>
