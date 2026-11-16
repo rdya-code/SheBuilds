@@ -1,37 +1,18 @@
 // src/components/users.js
+// Role-Based Access Control (RBAC) helpers & privacy masking utilities.
+// Hardcoded demo passwords have been removed from frontend code; authentication is verified
+// against bcrypt password hashes on the backend (/api/auth/login).
 
-// Demo users (no database needed for Activity 2)
-export const DEMO_USERS = [
-  {
-    id: 1,
-    email: "fatima@shebuilds.com",
-    password: "password123",
-    role: "Seller",
-    name: "Fatima Khan",
-    phone: "+92 300 1234567",
-  },
-  {
-    id: 2,
-    email: "zara@shebuilds.com",
-    password: "password123",
-    role: "Customer",
-    name: "Zara Ahmed",
-    phone: "+92 321 9876543",
-  },
-];
-
-// ROLE-BASED ACCESS CONTROL (Part 7)
-// Single source of truth: which functions each role is allowed to perform.
 export const ROLE_PERMISSIONS = {
   Seller: [
-    "add_listing",            // Restricted function (Part 7)
-    "view_my_listings",
-    "view_inquiries",         // Seller sees inquiries sent to them
-    "update_inquiry_status",
+    'add_listing',
+    'view_my_listings',
+    'view_inquiries',
+    'update_inquiry_status',
   ],
   Customer: [
-    "browse_marketplace",
-    "view_my_inquiries",      // Customer tracks their own inquiries
+    'browse_marketplace',
+    'view_my_inquiries',
   ],
 };
 
@@ -42,9 +23,9 @@ export function hasPermission(user, permission) {
   return allowed.includes(permission);
 }
 
-// SECURITY-AWARE DATA DISPLAY (Part 8)
-// Keeps the country code and operator prefix, masks the last 7 digits.
+// Masks the last 7 digits of a phone number for privacy.
 // "+92 300 1234567" -> "+92 300 *******"
 export function maskPhone(phone) {
-  return phone.slice(0, -7) + "*******";
+  if (!phone || phone.length <= 7) return '*******';
+  return phone.slice(0, -7) + '*******';
 }

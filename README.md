@@ -1,96 +1,89 @@
 ### 1. Project Information
 * **Project Name:** SheBuilds — A Secure Women's Business & Freelance Marketplace
 * **Group Members:**
-  1. Hareem Hamid (Module 2 — Inquiries & Tracking)
-  2. Radia Shahzad (Module 1 — Create Listing)
+  1. **Hareem Hamid** (`Hareem986`) — Module 2: Inquiries & Tracking (Frontend + Backend API)
+  2. **Radia Shahzad** — Module 1: Create & Manage Listings (Frontend + Backend API)
 * **User Roles:** Seller, Customer
 
 ---
 
-### 2. Live Website
+### 2. Live Website & Repository
 * **Public URL:** https://she-builds-flame.vercel.app/
+* **GitHub Repository:** https://github.com/rdya-code/SheBuilds.git
 
 ---
 
-### 3. Pages
-1. **Home (Home.jsx):** Mission, value proposition cards, call-to-action buttons.
-2. **Login (Login.jsx):** Functional demo login. Identifies the user and routes them to the dashboard.
-3. **Marketplace (Marketplace.jsx):** Listings with live search and category filters.
-4. **Dashboard (Dashboard.jsx):** Role-specific interface with links to both modules.
-5. **Create Listing (modules/ListingModule.jsx):** Module 1, Seller only.
-6. **Inquiries & Tracking (modules/InquiryModule.jsx):** Module 2, role-based.
+### 3. Tech Stack (Full-Stack — Activity 6)
+* **Frontend:** React 19, React Router DOM, Vite (`src/`)
+* **Backend:** Node.js, Express (`backend/`)
+* **Database:** SQLite via Node.js built-in `node:sqlite` (`backend/shebuilds.db`, schema in `backend/schema.sql`)
+* **Authentication & Security:** `bcryptjs` password hashing, `jsonwebtoken` (JWT Bearer tokens), RBAC middleware, parameterized SQL queries
 
 ---
 
-### 4. Module 1 — Create Listing (Member: Radia Shahzad)
-**Primary function:** A seller publishes a product or service listing.
-**Validation rules:**
-* Title: required, 5–60 characters
-* Category: required (Products or Services)
-* Price: required, positive number, maximum 100,000
-* Description: required, 20–300 characters
+### 4. How to Run Locally
 
-**JavaScript interactions:** Live validation with field-level error messages, character counter, and a listing table that updates on publish.
-**Feedback:** Green success message on publish, red error message when validation fails.
-**Access control:** Customers receive "Access Denied."
+#### 1. Start the Backend Server (Port 5000)
+```bash
+cd backend
+npm install
+npm start
+```
+On first startup, `backend/db.js` creates `backend/shebuilds.db` from `backend/schema.sql` and seeds demo accounts, listings, and inquiries.
 
----
-
-### 5. Module 2 — Inquiries & Tracking (Member: Hareem Hamid)
-**Primary function:** A customer sends an inquiry on a listing, and both sides track its status.
-**Validation rules:**
-* Listing: must be selected
-* Message: required, 10–300 characters
-
-**JavaScript interactions:** Search by reference number, filter by status, seller status updates.
-**Data visibility:** Customers see only their own inquiries. Sellers see only inquiries on their listings.
-**Feedback:** Success message showing the new reference number, error messages for invalid input, and Access Denied for the wrong role.
+#### 2. Start the Frontend Dev Server (Port 5173)
+```bash
+npm install
+npm run dev
+```
+Vite proxies all `/api/*` requests directly to `http://localhost:5000`.
 
 ---
 
-### 6. Integration
-* Both modules share sample data through `src/data/store.js`. A listing published in Module 1 appears in the Module 2 dropdown.
-* Both modules are protected routes. Logged-out users are redirected to Login.
-* Navigation is available in the top bar and from the Dashboard.
-* Shared styles are in `src/modules/shared.js`, so both modules look consistent.
+### 5. Pages & Modules
+1. **Home (`src/components/Home.jsx`):** Mission, value proposition cards, call-to-action buttons.
+2. **Login & Registration (`src/components/Login.jsx`):** Backend JWT authentication (`POST /api/auth/login`), new user registration (`POST /api/auth/register`), show/hide password toggle, and real-time password strength checker (`public/password_strength_helper.js`).
+3. **Marketplace (`src/components/Marketplace.jsx`):** Fetches live listings from SQLite (`GET /api/listings`) with search, category filters, and inquiry navigation.
+4. **Dashboard (`src/components/Dashboard.jsx`):** Role-specific portal displaying database-backed listings, inquiries, reports, and server-masked seller phone numbers.
+5. **Module 1 — Create Listing (`src/modules/ListingModule.jsx` & `backend/routes/listings.js`, Radia Shahzad):** Seller-only creation, listing management, and deletion with client + server validation.
+6. **Module 2 — Inquiries & Tracking (`src/modules/InquiryModule.jsx` & `backend/routes/inquiries.js`, Hareem Hamid):** Customer inquiry submission (generating `INQ-XXX` references), search by reference, filter by status, and Seller status updates with ownership checks.
 
 ---
 
-### 7. Demo Accounts
+### 6. Implemented Backend API Endpoints
+
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `GET` | `/api/health` | Public | Verifies Express server and SQLite database connectivity |
+| `POST` | `/api/auth/login` | Public | Verifies email & bcrypt password hash; returns signed JWT |
+| `POST` | `/api/auth/register` | Public | Validates inputs, hashes password with bcrypt, creates user, returns JWT |
+| `GET` | `/api/auth/me` | Authenticated (JWT) | Verifies JWT and returns current user profile |
+| `GET` | `/api/auth/sellers` | Authenticated (JWT) | Returns seller directory with server-masked phone numbers |
+| `GET` | `/api/listings` | Public | Lists all marketplace listings (supports `?category=` and `?search=`) |
+| `GET` | `/api/listings/mine` | Seller (JWT + RBAC) | Lists only the authenticated seller's listings |
+| `POST` | `/api/listings` | Seller (JWT + RBAC) | Validates and inserts a new listing into SQLite |
+| `DELETE` | `/api/listings/:id` | Seller (JWT + RBAC) | Deletes own listing after ownership and inquiry reference checks |
+| `GET` | `/api/inquiries` | Authenticated (JWT) | Returns role-isolated inquiries (`customer_id` or `seller_id`) |
+| `POST` | `/api/inquiries` | Customer (JWT + RBAC) | Validates input, creates inquiry with `INQ-XXX` reference in SQLite |
+| `PATCH` | `/api/inquiries/:ref/status` | Seller (JWT + RBAC) | Updates inquiry status after verifying seller ownership |
+
+---
+
+### 7. Demo Accounts (Seeded in `backend/shebuilds.db`)
 | Name | Role | Email | Password |
 |---|---|---|---|
-| Fatima Khan | Seller | fatima@shebuilds.com | password123 |
-| Zara Ahmed | Customer | zara@shebuilds.com | password123 |
+| Fatima Khan | Seller | `fatima@shebuilds.com` | `password123` |
+| Ayesha Noor | Seller | `ayesha@shebuilds.com` | `password123` |
+| Zara Ahmed | Customer | `zara@shebuilds.com` | `password123` |
+
+*(Passwords are stored in SQLite solely as bcrypt hashes; no plaintext passwords are kept in frontend JavaScript or browser storage.)*
 
 ---
 
-### 8. Security-Aware Development
-| Module | Possible Misuse | Response |
-|---|---|---|
-| Module 1 | Incomplete or invalid listing data (empty title, negative price) | Frontend validation blocks submission and shows field-level errors |
-| Module 1 | Customer attempts to publish a listing | Role check shows Access Denied and hides the form |
-| Module 2 | Customer reads another customer's inquiries | Results are filtered by role before display |
-| Module 2 | Seller changes status of another seller's inquiry | Seller sees only their own inquiries, so the control is unavailable for others |
-
-**Limitation:** All checks run in the browser. A user could bypass them by editing the code. Real enforcement needs a backend, which is planned for later in the semester. Data is in memory and resets on refresh.
-
----
-
-### 9. Testing
-| Test | Expected Result |
-|---|---|
-| Module 1: valid listing | Success message, listing appears in table |
-| Module 1: empty fields | Field errors shown, nothing added |
-| Module 1: price "abc" or "-5" | "Price must be a positive number." |
-| Module 1: customer opens page | Access Denied |
-| Module 2: valid inquiry | Success with reference number, appears in My Inquiries |
-| Module 2: message under 10 characters | "Message must be at least 10 characters." |
-| Module 2: search "INQ-101" | Only INQ-101 shown |
-| Module 2: seller changes status | Status updates, success message shown |
-| Integration: seller publishes a listing, customer selects it | New listing appears in the Module 2 dropdown |
-| Logout | Protected module routes redirect to Login |
-
-**Issue discovered (Module 1):** ____________________
-**Correction made:** ____________________
-**Issue discovered (Module 2):** ____________________
-**Correction made:** ____________________
+### 8. Security Controls Implemented
+* **Password Hashing:** `bcryptjs` (salt rounds: 10) for all accounts in SQLite; zero plaintext passwords in frontend code or `sessionStorage`.
+* **JWT Verification:** `verifyToken` rejects missing, malformed, tampered, and expired Bearer tokens with `401 Unauthorized`.
+* **Server-Side RBAC & Ownership:** `requireRole()` enforces Seller/Customer restrictions (`403 Forbidden`) and prevents sellers from altering another seller's listings or inquiries.
+* **Server-Side Validation:** Trims inputs and validates field types, min/max lengths, numeric bounds, and allowed enums on every POST/PATCH endpoint.
+* **SQL Injection Prevention:** Every SQLite query uses parameterized `?` placeholders via `node:sqlite` prepared statements.
+* **Safe Error Handling:** Central Express error middleware catches unexpected failures without exposing stack traces or database internals, and React `ErrorBoundary` isolates UI crashes.

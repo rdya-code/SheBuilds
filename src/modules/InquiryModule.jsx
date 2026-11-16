@@ -1,17 +1,20 @@
 // src/modules/InquiryModule.jsx
-// MODULE 2 — Inquiries & Tracking
-// Covers Activity 3 Part 3: primary function, validation, JS interactions, feedback, data display.
+// MODULE 2 — Inquiries & Tracking (Member: Hareem Hamid)
+// Connected to Express/SQLite backend (/api/inquiries and /api/listings).
 
-import React, { useState, useSyncExternalStore } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
-  getListings, getInquiries, subscribe, addInquiry, updateInquiryStatus,
+  createInquiry,
+  fetchInquiries,
+  fetchListings,
+  updateInquiryStatus,
 } from '../data/store';
 import { styles, Notice } from './shared';
 
 const STATUSES = ['New', 'In Progress', 'Completed'];
 
-// VALIDATION RULES
+// eslint-disable-next-line react-refresh/only-export-components
 export function validateInquiry(values) {
   const errors = {};
 
@@ -26,10 +29,15 @@ export function validateInquiry(values) {
 }
 
 export default function InquiryModule({ user }) {
-  const listings = useSyncExternalStore(subscribe, getListings);
-  const inquiries = useSyncExternalStore(subscribe, getInquiries);
+  const [searchParams] = useSearchParams();
+  const preselectedListingId = searchParams.get('listingId') || '';
 
-  const [form, setForm] = useState({ listingId: '', message: '' });
+  const [listings, setListings] = useState([]);
+  const [inquiries, setInquiries] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+
+  const [form, setForm] = useState({ listingId: preselectedListingId, message: '' });
   const [errors, setErrors] = useState({});
   const [notice, setNotice] = useState(null);
   const [search, setSearch] = useState('');
@@ -38,15 +46,40 @@ export default function InquiryModule({ user }) {
   const isCustomer = user.role === 'Customer';
   const isSeller = user.role === 'Seller';
 
-  // ROLE-BASED VISIBILITY (security-aware display):
-  // Customers see only inquiries they sent. Sellers see only inquiries on their listings.
-  const visible = inquiries.filter((q) =>
-    isCustomer ? q.customer === user.name : q.seller === user.name
-  );
+  useEffect(() => {
+    let active = true;
 
-  // SEARCH + FILTER (second JS interaction)
+    async function loadModuleData() {
+      try {
+        const tasks = [fetchInquiries()];
+        if (isCustomer) {
+          tasks.push(fetchListings());
+        }
+
+        const [inqRows, listingRows] = await Promise.all(tasks);
+        if (!active) return;
+
+        setInquiries(inqRows);
+        if (isCustomer && listingRows) {
+          setListings(listingRows);
+        }
+      } catch (err) {
+        if (active) {
+          setNotice({ type: 'error', text: err.message || 'Could not load inquiries.' });
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    loadModuleData();
+    return () => {
+      active = false;
+    };
+  }, [isCustomer]);
+
   const term = search.trim().toLowerCase();
-  const results = visible.filter(
+  const results = inquiries.filter(
     (q) =>
       q.ref.toLowerCase().includes(term) &&
       (statusFilter === 'All' || q.status === statusFilter)
@@ -58,8 +91,7 @@ export default function InquiryModule({ user }) {
     setErrors((er) => ({ ...er, [name]: undefined }));
   };
 
-  // PRIMARY FUNCTION: send an inquiry
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!isCustomer) {
@@ -74,27 +106,41 @@ export default function InquiryModule({ user }) {
       return;
     }
 
-    const listing = listings.find((l) => String(l.id) === form.listingId);
-    const ref = addInquiry({
-      listingId: listing.id,
-      listingTitle: listing.title,
-      seller: listing.seller,
-      customer: user.name,
-      message: form.message.trim(),
-    });
+    setSubmitting(true);
+    try {
+      const result = await createInquiry({
+        listingId: Number(form.listingId),
+        message: form.message.trim(),
+      });
 
-    setForm({ listingId: '', message: '' });
-    setNotice({ type: 'success', text: `Inquiry sent to ${listing.seller}. Your reference number is ${ref}.` });
+      setInquiries((prev) => [result.inquiry, ...prev]);
+      setForm({ listingId: '', message: '' });
+      setNotice({ type: 'success', text: result.message });
+    } catch (err) {
+      if (err.fieldErrors && Object.keys(err.fieldErrors).length > 0) {
+        setErrors(err.fieldErrors);
+      }
+      setNotice({ type: 'error', text: err.message || 'Could not send inquiry.' });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  // SECOND JS INTERACTION: seller updates status
-  const handleStatusChange = (ref, status) => {
+  const handleStatusChange = async (ref, status) => {
     if (!isSeller) {
       setNotice({ type: 'error', text: 'Access Denied: only Sellers can update inquiry status.' });
       return;
     }
-    updateInquiryStatus(ref, status);
-    setNotice({ type: 'success', text: `${ref} is now "${status}".` });
+
+    try {
+      const result = await updateInquiryStatus(ref, status);
+      setInquiries((prev) =>
+        prev.map((item) => (item.ref === ref ? result.inquiry : item))
+      );
+      setNotice({ type: 'success', text: result.message });
+    } catch (err) {
+      setNotice({ type: 'error', text: err.message || 'Could not update inquiry status.' });
+    }
   };
 
   return (
@@ -109,15 +155,17 @@ export default function InquiryModule({ user }) {
 
       <Notice notice={notice} />
 
-      {/* CUSTOMER: send an inquiry */}
       {isCustomer && (
         <div style={styles.card}>
           <h3>Request an Inquiry</h3>
           <form onSubmit={handleSubmit} noValidate>
             <label style={styles.label} htmlFor="listingId">Listing</label>
             <select
-              id="listingId" name="listingId" value={form.listingId}
-              onChange={handleChange} style={styles.input}
+              id="listingId"
+              name="listingId"
+              value={form.listingId}
+              onChange={handleChange}
+              style={styles.input}
             >
               <option value="">-- Select a listing --</option>
               {listings.map((l) => (
@@ -130,8 +178,11 @@ export default function InquiryModule({ user }) {
 
             <label style={styles.label} htmlFor="message">Message</label>
             <textarea
-              id="message" name="message" value={form.message}
-              onChange={handleChange} placeholder="Ask your question (10–300 characters)"
+              id="message"
+              name="message"
+              value={form.message}
+              onChange={handleChange}
+              placeholder="Ask your question (10–300 characters)"
               style={styles.textarea}
             />
             <p style={{ fontSize: '0.8rem', color: '#6c757d', margin: '0.2rem 0 0' }}>
@@ -139,12 +190,13 @@ export default function InquiryModule({ user }) {
             </p>
             {errors.message && <p style={styles.fieldError}>{errors.message}</p>}
 
-            <button type="submit" style={styles.btn}>Send Inquiry</button>
+            <button type="submit" style={styles.btn} disabled={submitting}>
+              {submitting ? 'Sending...' : 'Send Inquiry'}
+            </button>
           </form>
         </div>
       )}
 
-      {/* BOTH ROLES: search, filter, and view results */}
       <div style={styles.card}>
         <h3>{isCustomer ? 'My Inquiries' : 'Incoming Inquiries'}</h3>
 
@@ -166,14 +218,16 @@ export default function InquiryModule({ user }) {
           </select>
         </div>
 
-        {visible.length === 0 ? (
+        {loading ? (
+          <p>Loading inquiries from database...</p>
+        ) : inquiries.length === 0 ? (
           <p>{isCustomer ? 'You have not sent any inquiries yet.' : 'No inquiries on your listings yet.'}</p>
         ) : results.length === 0 ? (
           <p>No inquiries match your search or filter.</p>
         ) : (
           <>
             <p style={{ fontSize: '0.85rem', color: '#6c757d' }}>
-              Showing {results.length} of {visible.length}
+              Showing {results.length} of {inquiries.length}
             </p>
             <table style={styles.table}>
               <thead>

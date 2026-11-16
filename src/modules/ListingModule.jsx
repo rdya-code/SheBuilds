@@ -1,16 +1,15 @@
 // src/modules/ListingModule.jsx
-// MODULE 1 — Create Listing (Seller only)
-// Covers Activity 3 Part 2: UI, input, validation, JS functionality, feedback, data display.
+// MODULE 1 — Create Listing (Member: Radia Shahzad)
+// Connected to Express/SQLite backend (/api/listings).
 
-import React, { useState, useSyncExternalStore } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getListings, addListing, subscribe } from '../data/store';
+import { createListing, fetchMyListings, removeListing } from '../data/store';
 import { styles, Notice } from './shared';
 
 const CATEGORIES = ['Products', 'Services'];
 
-// VALIDATION RULES (Activity 3 Part 2, item 3)
-// Returns an object of field errors. An empty object means the input is valid.
+// eslint-disable-next-line react-refresh/only-export-components
 export function validateListing(values) {
   const errors = {};
 
@@ -37,14 +36,35 @@ export function validateListing(values) {
 }
 
 export default function ListingModule({ user }) {
-  // Live data from the shared store. Re-renders when a listing is added.
-  const listings = useSyncExternalStore(subscribe, getListings);
-
+  const [myListings, setMyListings] = useState([]);
+  const [loading, setLoading] = useState(user.role === 'Seller');
+  const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({ title: '', category: '', price: '', description: '' });
   const [errors, setErrors] = useState({});
   const [notice, setNotice] = useState(null);
 
-  // Role check (carried over from Activity 2 RBAC). Hooks above run first on every render.
+  useEffect(() => {
+    if (user.role !== 'Seller') return undefined;
+
+    let active = true;
+    fetchMyListings()
+      .then((rows) => {
+        if (active) setMyListings(rows);
+      })
+      .catch((err) => {
+        if (active) {
+          setNotice({ type: 'error', text: err.message || 'Could not load your listings.' });
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [user.role]);
+
   if (user.role !== 'Seller') {
     return (
       <div style={styles.page}>
@@ -63,33 +83,47 @@ export default function ListingModule({ user }) {
     setErrors((er) => ({ ...er, [name]: undefined }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const found = validateListing(form);
     setErrors(found);
 
-    // FEEDBACK: error when validation fails
     if (Object.keys(found).length > 0) {
       setNotice({ type: 'error', text: 'Please fix the highlighted fields and try again.' });
       return;
     }
 
-    // ACTION: publish the listing to the shared store
-    addListing({
-      title: form.title.trim(),
-      category: form.category,
-      price: Number(form.price),
-      description: form.description.trim(),
-      seller: user.name,
-    });
+    setSubmitting(true);
+    try {
+      const result = await createListing({
+        title: form.title.trim(),
+        category: form.category,
+        price: Number(form.price),
+        description: form.description.trim(),
+      });
 
-    setForm({ title: '', category: '', price: '', description: '' });
-    // FEEDBACK: success
-    setNotice({ type: 'success', text: 'Listing published. It now appears in the Marketplace module and inquiry dropdown.' });
+      setMyListings((prev) => [result.listing, ...prev]);
+      setForm({ title: '', category: '', price: '', description: '' });
+      setNotice({ type: 'success', text: result.message });
+    } catch (err) {
+      if (err.fieldErrors && Object.keys(err.fieldErrors).length > 0) {
+        setErrors(err.fieldErrors);
+      }
+      setNotice({ type: 'error', text: err.message || 'Could not publish listing.' });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  // DATA DISPLAY: only this seller's listings, newest first
-  const myListings = listings.filter((l) => l.seller === user.name).reverse();
+  const handleDelete = async (id) => {
+    try {
+      const result = await removeListing(id);
+      setMyListings((prev) => prev.filter((item) => item.id !== id));
+      setNotice({ type: 'success', text: result.message });
+    } catch (err) {
+      setNotice({ type: 'error', text: err.message || 'Could not delete listing.' });
+    }
+  };
 
   return (
     <div style={styles.page}>
@@ -105,18 +139,27 @@ export default function ListingModule({ user }) {
 
       <div style={styles.card}>
         <h3>New Product or Service</h3>
-        {/* noValidate lets our custom messages show instead of browser popups */}
         <form onSubmit={handleSubmit} noValidate>
           <label style={styles.label} htmlFor="title">Title</label>
           <input
-            id="title" name="title" type="text" value={form.title}
-            onChange={handleChange} placeholder="e.g. Handmade Tote Bag"
+            id="title"
+            name="title"
+            type="text"
+            value={form.title}
+            onChange={handleChange}
+            placeholder="e.g. Handmade Tote Bag"
             style={styles.input}
           />
           {errors.title && <p style={styles.fieldError}>{errors.title}</p>}
 
           <label style={styles.label} htmlFor="category">Category</label>
-          <select id="category" name="category" value={form.category} onChange={handleChange} style={styles.input}>
+          <select
+            id="category"
+            name="category"
+            value={form.category}
+            onChange={handleChange}
+            style={styles.input}
+          >
             <option value="">-- Select a category --</option>
             {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
@@ -124,16 +167,24 @@ export default function ListingModule({ user }) {
 
           <label style={styles.label} htmlFor="price">Price (USD)</label>
           <input
-            id="price" name="price" type="text" inputMode="decimal" value={form.price}
-            onChange={handleChange} placeholder="e.g. 45"
+            id="price"
+            name="price"
+            type="text"
+            inputMode="decimal"
+            value={form.price}
+            onChange={handleChange}
+            placeholder="e.g. 45"
             style={styles.input}
           />
           {errors.price && <p style={styles.fieldError}>{errors.price}</p>}
 
           <label style={styles.label} htmlFor="description">Description</label>
           <textarea
-            id="description" name="description" value={form.description}
-            onChange={handleChange} placeholder="Describe what you offer (20–300 characters)"
+            id="description"
+            name="description"
+            value={form.description}
+            onChange={handleChange}
+            placeholder="Describe what you offer (20–300 characters)"
             style={styles.textarea}
           />
           <p style={{ fontSize: '0.8rem', color: '#6c757d', margin: '0.2rem 0 0' }}>
@@ -141,13 +192,17 @@ export default function ListingModule({ user }) {
           </p>
           {errors.description && <p style={styles.fieldError}>{errors.description}</p>}
 
-          <button type="submit" style={styles.btn}>Publish Listing</button>
+          <button type="submit" style={styles.btn} disabled={submitting}>
+            {submitting ? 'Publishing...' : 'Publish Listing'}
+          </button>
         </form>
       </div>
 
       <div style={styles.card}>
         <h3>Your Listings ({myListings.length})</h3>
-        {myListings.length === 0 ? (
+        {loading ? (
+          <p>Loading listings from database...</p>
+        ) : myListings.length === 0 ? (
           <p>You have no listings yet. Publish one above.</p>
         ) : (
           <table style={styles.table}>
@@ -156,6 +211,7 @@ export default function ListingModule({ user }) {
                 <th style={styles.th}>Title</th>
                 <th style={styles.th}>Category</th>
                 <th style={styles.th}>Price</th>
+                <th style={styles.th}>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -164,6 +220,15 @@ export default function ListingModule({ user }) {
                   <td style={styles.td}>{l.title}</td>
                   <td style={styles.td}>{l.category}</td>
                   <td style={styles.td}>${l.price}</td>
+                  <td style={styles.td}>
+                    <button
+                      type="button"
+                      style={styles.btnDanger}
+                      onClick={() => handleDelete(l.id)}
+                    >
+                      Delete
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
